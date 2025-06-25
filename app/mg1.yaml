@@ -1,0 +1,40 @@
+networks:
+  app_network:
+    driver: bridge
+
+services:
+  mongodb:
+    image: mongo:6
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    command: ["mongod", "--bind_ip", "0.0.0.0"]
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    ports:
+      - 8080:8081
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb?retryWrites=true&w=majority&useUnifiedTopology=true
+    networks:
+      - app_network
+
+    my-app:
+    image: 705307574454.dkr.ecr.us-east-2.amazonaws.com/my-app:1.0
+    ports:
+      - 3000:3000
+    environment:
+      - MONGO_URL=mongodb://admin:password@mongodb:27017/?authSource=admin&retryWrites=true&w=majority&useUnifiedTopology=true
+    networks:
+      - app_network
